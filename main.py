@@ -16,7 +16,7 @@ model = None
 def model_loading():
     global model
     import keras
-    model = keras.models.load_model('effnet.h5')
+    model = keras.models.load_model('model/effnet.h5')
     thread_loading.join()
     photo_label.image = None
     result_label.configure(text='', font=font_for_other, pady=15)
@@ -26,7 +26,7 @@ thread_load_model = threading.Thread(target=model_loading)
 
 def gif_in_ui():
 
-    image_gif = Image.open('AqCa.gif')
+    image_gif = Image.open('media/AqCa.gif')
     for index,frame in enumerate(ImageSequence.Iterator(image_gif)):
         image = frame
         if image.height > 350:
@@ -201,10 +201,11 @@ style_save.map("TRadiobutton",
 male_radio = ttk.Radiobutton(frame_save, text="М", variable=gender_var, value="М", style='TRadiobutton')
 female_radio = ttk.Radiobutton(frame_save, text="Ж", variable=gender_var, value="Ж", style='TRadiobutton')
 # Кнопка сохранения
-image_save = Image.open('save.png')
-image_save = image_save.resize((48, int(48 / image_save.width * image_save.height)))
-photo_save = ImageTk.PhotoImage(image_save)
-save_button = tk.Button(frame_save, command=add_record, image=photo_save, background='#1a1a1a', activebackground="#1a1a1a",
+with open("media/save.png", "rb") as image_file:
+    encoded_image = base64.encodebytes(image_file.read())
+static_photo = tk.PhotoImage(data=encoded_image)
+
+save_button = tk.Button(frame_save, command=add_record, image=static_photo, background='#1a1a1a', activebackground="#1a1a1a",
                         borderwidth=0)
 message_label = tk.Label(frame_save, wraplength=500, text="", font=('Comic Sans MS',10),background='#101010', anchor='se', padx=10)
 
@@ -243,7 +244,7 @@ def login(event=None):
     username = username_entry.get()
     password = password_entry.get()
     # Здесь можно добавить код для проверки логина и пароля
-    if username == 'admin' and password == 'admin' or username == password:
+    if username == 'admin' and password == 'admin':
         frame_login.destroy()
         thread_loading.start()
         thread_load_model.start()
