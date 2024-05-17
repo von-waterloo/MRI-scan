@@ -5,12 +5,15 @@
 1) клонирование репозитория:
 
 git init
+
 git clone https://github.com/von-waterloo/MRI-scan.git
 
 2) установка виртуального окружения и зависимостей:
 
 python -m venv venv
+
 venv/Scripts/activate
+
 pip install -r requirements.txt
 
 3) запускаем main.py
@@ -40,13 +43,16 @@ Run via IDE:
 
 1) cloning the repository:
 
-git initialization
+git init
+
 git clone https://github.com/von-waterloo/MRI-scan.git
 
 2) installation of virtual environment and dependencies:
 
 python -m venv venv
+
 venv/Scripts/activate
+
 pip install -r requirements.txt
 
 3) run main.py
