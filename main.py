@@ -19,24 +19,29 @@ def model_loading():
     model = keras.models.load_model('model/effnet.h5')
     thread_loading.join()
     photo_label.image = None
-    result_label.configure(text='', font=font_for_other, pady=15)
     make_ui()
 
 thread_load_model = threading.Thread(target=model_loading)
 
-def gif_in_ui():
 
+
+# Функция для анимации появления текста
+def show_text(index):
+    if index < len(model_text):
+        result_label.config(text=model_text[:index+1])
+        result_label.after(35, show_text, index+1)
+def gif_in_ui():
     image_gif = Image.open('media/AqCa.gif')
     for index,frame in enumerate(ImageSequence.Iterator(image_gif)):
         image = frame
-        if image.height > 350:
-            image = image.resize((int(image.width * 350 / image.height), 350))
+        if image.height > 400:
+            image = image.resize((int(image.width * 400 / image.height), 400))
         photo = ImageTk.PhotoImage(image)
         photo_label.configure(image=photo)
         photo_label.image = photo
         root.update()
         if index == 0:
-            result_label.configure(text='Подготовка модели', foreground='white', font=('Comic Sans MS', 16))
+            result_label.config(text='Подготовка модели', foreground='white', font=('Comic Sans MS', 16))
         time.sleep(0.04)
 def loading():
     frame_pred.place(y=0, relwidth=1.0)
@@ -75,6 +80,7 @@ def predict_image(image):
     return p
 
 def predict_button_click():
+    result_label.configure(text='', font=font_for_other, pady=15)
     # Открытие диалогового окна для выбора файла
     file_path = filedialog.askopenfilename()
 
@@ -128,10 +134,16 @@ photo_label = ttk.Label(frame_pred, background="#101010")
 result_label = tk.Label(frame_pred, wraplength=500, text="", font=font_for_other, background='#101010', height=6, anchor='n')
 
 def make_ui():
+    global model_text
     predict_button.place(anchor='center', rely=0.82, relx=0.5)
+    result_label.configure(font=font_for_other, pady=190)
+    model_text = 'МОДЕЛЬ ГОТОВА К РАБОТЕ'
+    show_text(0)
+    time.sleep(3)
+    model_text = 'Для начала работы нажмите на кнопку [DETECT] и выберите МРТ-снимок в формате JPG или PNG. Распознавание опухоли начнётся автоматически'
+    result_label.configure(text=model_text, font=font_for_other)
 
 # Сохранение в базу
-
 def add_record():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
@@ -243,7 +255,6 @@ password_entry.grid(row=2, column=1, padx=10, pady=5)
 def login(event=None):
     username = username_entry.get()
     password = password_entry.get()
-    # Здесь можно добавить код для проверки логина и пароля
     if username == 'admin' and password == 'admin':
         frame_login.destroy()
         thread_loading.start()
