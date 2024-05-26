@@ -24,7 +24,6 @@ def model_loading():
 thread_load_model = threading.Thread(target=model_loading)
 
 
-
 # Функция для анимации появления текста
 def show_text(index):
     if index < len(model_text):
@@ -81,6 +80,7 @@ def predict_image(image):
 
 def predict_button_click():
     result_label.configure(text='', font=font_for_other, pady=15)
+
     # Открытие диалогового окна для выбора файла
     file_path = filedialog.askopenfilename()
 
@@ -118,7 +118,7 @@ root.title("MRI-scan")
 root.protocol("WM_DELETE_WINDOW", on_closing)
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
-root.geometry(f'{int(screen_width * 0.5)}x{int(screen_height * 0.75)}')
+root.geometry(f'{int(screen_width * 0.55)}x{int(screen_height * 0.75)}')
 
 font_for_btn = ('Tahoma', 15)
 font_for_other = ('Tahoma', 12)
@@ -135,11 +135,11 @@ result_label = tk.Label(frame_pred, wraplength=500, text="", font=font_for_other
 
 def make_ui():
     global model_text
-    predict_button.place(anchor='center', rely=0.82, relx=0.5)
     result_label.configure(font=font_for_other, pady=190)
     model_text = 'МОДЕЛЬ ГОТОВА К РАБОТЕ'
     show_text(0)
-    time.sleep(3)
+    time.sleep(2.5)
+    predict_button.place(anchor='center', rely=0.82, relx=0.5)
     model_text = 'Для начала работы нажмите на кнопку [DETECT] и выберите МРТ-снимок в формате JPG или PNG. Распознавание опухоли начнётся автоматически'
     result_label.configure(text=model_text, font=font_for_other)
 
@@ -190,6 +190,82 @@ def add_record():
     fio_entry.delete(0, tk.END)
     birth_date_entry.delete(0, tk.END)
 
+def search_records(event=None):
+    # Получаем значение из поля поиска
+    search_term = search_entry.get()
+    # Очищаем таблицу от предыдущих записей
+    tree.delete(*tree.get_children())
+
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    # Выполняем запрос к базе данных с фильтрацией
+    c.execute("SELECT * FROM persons WHERE fio LIKE ?", ('%' + search_term + '%',))
+    data = c.fetchall()
+
+    # Заполняем таблицу новыми записями
+    for row in data:
+        c.execute("SELECT * FROM results WHERE id LIKE ?", (row[0],))
+        res = c.fetchall()[0][2]
+        tree.insert("", "end", text=row[0], values=(row[1], row[2], row[3], res))
+
+def new_window():
+    new_window = tk.Toplevel(root, height=800, width=800)
+    new_window.title("База данных")
+
+    # Подключаемся к SQLite-базе данных
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+
+    # Запрашиваем данные из таблицы persons
+    c.execute("SELECT * FROM persons")
+    data = c.fetchall()
+    style = ttk.Style()
+    style.configure("Treeview.Row", height=50)
+    global tree
+    # Создаем виджет Treeview для отображения данных
+    tree = ttk.Treeview(new_window, style="Treeview.Row")
+    tree["columns"] = ("1", "2", "3", "4")
+    tree.column("#0", width=50)
+    tree.column("1", width=250)
+    tree.column("2", width=100)
+    tree.column("3", width=50)
+    tree.column("4", width=150)
+    tree.heading("#0", text="ID")
+    tree.heading("1", text="ФИО")
+    tree.heading("2", text="Возраст")
+    tree.heading("3", text="Пол")
+    tree.heading("4", text="Результат")
+
+    global search_entry
+    search_frame = ttk.Frame(new_window)
+    search_label = ttk.Label(search_frame, text="Поиск:")
+    search_entry = ttk.Entry(search_frame)
+    search_button = tk.Button(search_frame, text="Найти", command=search_records)
+
+
+    # Заполняем Treeview данными из таблицы persons
+    for row in data:
+        c.execute("SELECT * FROM results WHERE id LIKE ?", (row[0],))
+        res = c.fetchall()[0][2]
+        tree.insert("", "end", text=row[0], values=(row[1], row[2], row[3], res))
+
+    # Создаем вертикальную полосу прокрутки
+    scrollbar = ttk.Scrollbar(new_window, command=tree.yview)
+    tree.configure(yscrollcommand=scrollbar.set)
+
+
+
+    # Размещаем виджеты в окне
+    search_label.pack(side=tk.LEFT, padx=5, pady=5)
+    search_entry.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.X, expand=True)
+    search_entry.bind("<Return>", search_records)
+    search_button.pack(side=tk.LEFT, padx=5, pady=5)
+    search_frame.pack(side=tk.TOP, pady=5)
+    tree.pack(side=tk.LEFT, fill="both", expand=True)
+    scrollbar.pack(side=tk.RIGHT, fill="y")
+
+    conn.close()
+
 frame_save = tk.Frame(root, background='#101010')
 # Поле ввода ФИО
 fio_label = ttk.Label(frame_save, text="ФИО:", background='#101010', font=font_for_other, foreground='white')
@@ -200,7 +276,6 @@ birth_date_entry = ttk.Entry(frame_save, width=10, font=font_for_other, foregrou
 # Выбор пола
 gender_label = ttk.Label(frame_save, text="Пол:", background='#101010', font=font_for_other, foreground='white')
 gender_var = tk.StringVar()
-
 style_save = ttk.Style()
 
 # Настраиваем стиль для RadioButton
@@ -217,9 +292,18 @@ with open("media/save.png", "rb") as image_file:
     encoded_image = base64.encodebytes(image_file.read())
 static_photo = tk.PhotoImage(data=encoded_image)
 
+with open("media/book.png", "rb") as image_file:
+    encoded_image = base64.encodebytes(image_file.read())
+static_photo_book = tk.PhotoImage(data=encoded_image)
+
+
 save_button = tk.Button(frame_save, command=add_record, image=static_photo, background='#1a1a1a', activebackground="#1a1a1a",
                         borderwidth=0)
 message_label = tk.Label(frame_save, wraplength=500, text="", font=('Comic Sans MS',10),background='#101010', anchor='se', padx=10)
+
+
+search_button = tk.Button(frame_save, command=new_window, image=static_photo_book, background='#1a1a1a', activebackground="#1a1a1a",
+                        borderwidth=0)
 
 def make_save_ui():
     message_label.pack(side=tk.TOP, fill=tk.X)
@@ -231,6 +315,7 @@ def make_save_ui():
     male_radio.pack(side=tk.LEFT, padx=5, pady=5)
     female_radio.pack(side=tk.LEFT, padx=5, pady=5)
     save_button.pack(side=tk.LEFT, padx=10, pady=10)
+    search_button.pack(side=tk.LEFT, padx=10, pady=10)
 
     frame_save.pack(side=tk.BOTTOM, fill=tk.X)
 
