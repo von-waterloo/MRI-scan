@@ -80,7 +80,6 @@ def predict_image(image):
 
 def predict_button_click():
     result_label.configure(text='', font=font_for_other, pady=15)
-
     # Открытие диалогового окна для выбора файла
     file_path = filedialog.askopenfilename()
 
@@ -232,7 +231,7 @@ def new_window():
     tree.column("4", width=150)
     tree.heading("#0", text="ID")
     tree.heading("1", text="ФИО")
-    tree.heading("2", text="Возраст")
+    tree.heading("2", text="Дата рождения")
     tree.heading("3", text="Пол")
     tree.heading("4", text="Результат")
 
@@ -260,7 +259,7 @@ def new_window():
     search_entry.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.X, expand=True)
     search_entry.bind("<Return>", search_records)
     search_button.pack(side=tk.LEFT, padx=5, pady=5)
-    search_frame.pack(side=tk.TOP, pady=5)
+    search_frame.pack(side=tk.TOP, pady=5, anchor='w')
     tree.pack(side=tk.LEFT, fill="both", expand=True)
     scrollbar.pack(side=tk.RIGHT, fill="y")
 
